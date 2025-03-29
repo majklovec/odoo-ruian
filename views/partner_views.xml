@@ -1,0 +1,12 @@
+<odoo>
+    <record id="view_partner_form_ruian" model="ir.ui.view">
+        <field name="name">res.partner.form.ruian</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='street']" position="after">
+                <field name="ruian_code"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

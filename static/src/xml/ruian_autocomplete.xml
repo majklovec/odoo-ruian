@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+    <t t-name="RUIANAutocomplete">
+        <div class="ruian-autocomplete">
+            <input type="text" class="ruian-input form-control" placeholder="Start typing address..." />
+            <div class="suggestion-list o_hidden"></div>
+            <div class="ruian-spinner o_hidden">
+                <i class="fa fa-refresh fa-spin"></i>
+            </div>
+        </div>
+    </t>
+</templates>

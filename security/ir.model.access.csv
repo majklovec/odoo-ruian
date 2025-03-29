@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ruian_town,ruian.town,model_ruian_town,,1,0,0,0
+access_ruian_street,ruian.street,model_ruian_street,,1,0,0,0
+access_ruian_number,ruian.number,model_ruian_number,,1,0,0,0
+access_ruian_import,access_ruian_import,ruian.model_ruian_import,base.group_user,1,0,0,0
