@@ -5,12 +5,13 @@ from odoo.tools.translate import _
 class RuianNumber(models.Model):
     _name = "ruian.number"
     _description = "RUIAN Numbers"
-    _order = "name desc"
+    _order = "name"
 
     code = fields.Integer(required=True)
     name = fields.Char(required=True)
-    coord_x = fields.Float(digits=(9, 6))
-    coord_y = fields.Float(digits=(9, 6))
+
+    coord_x = fields.Float(digits=(10, 7))
+    coord_y = fields.Float(digits=(10, 7))
 
     town_id = fields.Many2one("ruian.town", string="Town")
     street_id = fields.Many2one("ruian.street", string="Street")
