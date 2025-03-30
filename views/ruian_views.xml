@@ -1,72 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- RUIAN Menu Structure -->
-    <menuitem id="menu_ruian_config" name="RUIAN" parent="base.menu_custom" sequence="100"/>
-
-    <!-- Town Configuration -->
-    <record id="action_ruian_town" model="ir.actions.act_window">
-        <field name="name">Towns</field>
-        <field name="res_model">ruian.town</field>
-        <field name="view_mode">list,form</field>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                Configure Czech towns and municipalities
-            </p>
-        </field>
-    </record>
-
-    <menuitem id="menu_ruian_town" name="Towns" parent="menu_ruian_config" action="action_ruian_town" sequence="10"/>
-
-    <!-- Street Configuration -->
-    <record id="action_ruian_street" model="ir.actions.act_window">
-        <field name="name">Streets</field>
-        <field name="res_model">ruian.street</field>
-        <field name="view_mode">list,form</field>
-    </record>
-
-    <menuitem id="menu_ruian_street" name="Streets" parent="menu_ruian_config" action="action_ruian_street" sequence="20"/>
-
-    <!-- Number Configuration -->
-    <record id="action_ruian_number" model="ir.actions.act_window">
-        <field name="name">Address Numbers</field>
-        <field name="res_model">ruian.number</field>
-        <field name="view_mode">list,form</field>
-    </record>
-
-    <menuitem id="menu_ruian_number" name="Address Numbers" parent="menu_ruian_config" action="action_ruian_number" sequence="30"/>
-
     <!-- List Views -->
-    <record id="view_ruian_town_tree" model="ir.ui.view">
+    <record id="view_ruian_town_list" model="ir.ui.view">
         <field name="name">ruian.town.list</field>
         <field name="model">ruian.town</field>
         <field name="arch" type="xml">
             <list>
-                <field name="code"/>
                 <field name="name"/>
                 <field name="postal_code"/>
             </list>
         </field>
     </record>
 
-    <record id="view_ruian_street_tree" model="ir.ui.view">
+    <record id="view_ruian_street_list" model="ir.ui.view">
         <field name="name">ruian.street.list</field>
         <field name="model">ruian.street</field>
         <field name="arch" type="xml">
             <list>
                 <field name="name"/>
-                <field name="town_ids" widget="many2many_tags"/>
+                <!-- Show count of related numbers -->
+                <field name="number_count" string="Numbers"/>
             </list>
         </field>
     </record>
 
-    <record id="view_ruian_number_tree" model="ir.ui.view">
+    <record id="view_ruian_number_list" model="ir.ui.view">
         <field name="name">ruian.number.list</field>
         <field name="model">ruian.number</field>
         <field name="arch" type="xml">
             <list>
                 <field name="name"/>
-                <field name="town_id"/>
                 <field name="street_ids" widget="many2many_tags"/>
+                <field name="town_id"/>
             </list>
         </field>
     </record>
@@ -96,8 +61,18 @@
                 <sheet>
                     <group>
                         <field name="name"/>
-                        <field name="town_ids" widget="many2many_tags"/>
                     </group>
+                    <!-- Numbers in this street -->
+                    <field name="number_ids">
+                        <list>
+                            <field name="full_address"/>
+                        </list>
+                        <form>
+                            <field name="name"/>
+                            <field name="street_ids" widget="many2many_tags"/>
+                            <field name="town_id" />
+                        </form>
+                    </field>
                 </sheet>
             </form>
         </field>
@@ -110,9 +85,10 @@
             <form>
                 <sheet>
                     <group>
+                        <field name="full_address" readonly="1"/>
                         <field name="name"/>
-                        <field name="town_id"/>
                         <field name="street_ids" widget="many2many_tags"/>
+                        <field name="town_id" />
                         <field name="coord_x"/>
                         <field name="coord_y"/>
                     </group>

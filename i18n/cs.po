@@ -1,0 +1,172 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 18.0-20250320\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-03-29 20:51+0000\n"
+"PO-Revision-Date: 2025-03-29 20:51+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: ruian
+#: model:ir.actions.act_window,name:ruian.action_ruian_number
+#: model:ir.ui.menu,name:ruian.menu_ruian_number
+msgid "Address Numbers"
+msgstr "Číslování adres"
+
+#. module: ruian
+#: model:ir.model.fields,field_description:ruian.field_ruian_street__town_ids
+msgid "Associated Towns"
+msgstr "Přiřazené obce"
+
+#. module: ruian
+#: model:ir.model.fields,field_description:ruian.field_ruian_number__code
+#: model:ir.model.fields,field_description:ruian.field_ruian_town__code
+msgid "Code"
+msgstr "Kód"
+
+#. module: ruian
+#: model_terms:ir.actions.act_window,help:ruian.action_ruian_town
+msgid "Configure Czech towns and municipalities"
+msgstr "Konfigurace českých měst a obcí"
+
+#. module: ruian
+#: model:ir.model,name:ruian.model_res_partner
+msgid "Contact"
+msgstr "Kontakt"
+
+#. module: ruian
+#: model:ir.model.fields,field_description:ruian.field_ruian_number__coord_x
+msgid "Coord X"
+msgstr "Souřadnice X"
+
+#. module: ruian
+#: model:ir.model.fields,field_description:ruian.field_ruian_number__coord_y
+msgid "Coord Y"
+msgstr "Souřadnice Y"
+
+#. module: ruian
+#: model:ir.model.fields,field_description:ruian.field_res_partner__ruian_coord_x
+#: model:ir.model.fields,field_description:ruian.field_res_users__ruian_coord_x
+msgid "Coordinate X"
+msgstr "Souřadnice X"
+
+#. module: ruian
+#: model:ir.model.fields,field_description:ruian.field_res_partner__ruian_coord_y
+#: model:ir.model.fields,field_description:ruian.field_res_users__ruian_coord_y
+msgid "Coordinate Y"
+msgstr "Souřadnice Y"
+
+#. module: ruian
+#: model:ir.model.fields,field_description:ruian.field_ruian_import__create_uid
+#: model:ir.model.fields,field_description:ruian.field_ruian_number__create_uid
+#: model:ir.model.fields,field_description:ruian.field_ruian_street__create_uid
+#: model:ir.model.fields,field_description:ruian.field_ruian_town__create_uid
+msgid "Created by"
+msgstr "Vytvořil"
+
+#. module: ruian
+#: model:ir.model.fields,field_description:ruian.field_ruian_import__create_date
+#: model:ir.model.fields,field_description:ruian.field_ruian_number__create_date
+#: model:ir.model.fields,field_description:ruian.field_ruian_street__create_date
+#: model:ir.model.fields,field_description:ruian.field_ruian_town__create_date
+msgid "Created on"
+msgstr "Vytvořeno dne"
+
+#. module: ruian
+#: model:ir.model.fields,field_description:ruian.field_ruian_import__display_name
+#: model:ir.model.fields,field_description:ruian.field_ruian_number__display_name
+#: model:ir.model.fields,field_description:ruian.field_ruian_street__display_name
+#: model:ir.model.fields,field_description:ruian.field_ruian_town__display_name
+msgid "Display Name"
+msgstr "Zobrazený název"
+
+#. module: ruian
+#. odoo-python
+#: code:addons/ruian/models/ruian_import.py:0
+msgid "Download failed: %s"
+msgstr "Stažení se nezdařilo: %s"
+
+#. module: ruian
+#: model:ir.model.fields,field_description:ruian.field_ruian_number__full_address
+msgid "Full Address"
+msgstr "Celá adresa"
+
+#. module: ruian
+#: model:ir.model.fields,field_description:ruian.field_ruian_street__number_ids
+msgid "House Numbers"
+msgstr "Čísla domů"
+
+#. module: ruian
+#: model:ir.model.fields,field_description:ruian.field_ruian_town__postal_code
+msgid "Postal Code"
+msgstr "PSČ"
+
+#. module: ruian
+#: model:ir.ui.menu,name:ruian.menu_ruian_config
+msgid "RUIAN"
+msgstr "RÚIAN"
+
+#. module: ruian
+#: model:ir.model.fields,field_description:ruian.field_res_partner__ruian_code
+#: model:ir.model.fields,field_description:ruian.field_res_users__ruian_code
+msgid "RUIAN Code"
+msgstr "Kód RÚIAN"
+
+#. module: ruian
+#: model:ir.model,name:ruian.model_ruian_import
+msgid "RUIAN Data Import"
+msgstr "Import dat RÚIAN"
+
+#. module: ruian
+#: model:ir.actions.server,name:ruian.ir_cron_ruian_import_ir_actions_server
+msgid "RUIAN: Monthly Import"
+msgstr "RÚIAN: Měsíční import"
+
+#. module: ruian
+#. odoo-javascript
+#: code:addons/ruian/static/src/xml/ruian_autocomplete.xml:0
+msgid "Start typing address..."
+msgstr "Začněte psát adresu..."
+
+#. module: ruian
+#: model:ir.actions.act_window,name:ruian.action_ruian_street
+#: model:ir.model.fields,field_description:ruian.field_ruian_number__street_ids
+#: model:ir.ui.menu,name:ruian.menu_ruian_street
+msgid "Streets"
+msgstr "Ulice"
+
+#. module: ruian
+#: model:ir.model.fields,field_description:ruian.field_ruian_number__town_id
+msgid "Town"
+msgstr "Obec"
+
+#. module: ruian
+#: model:ir.actions.act_window,name:ruian.action_ruian_town
+#: model:ir.ui.menu,name:ruian.menu_ruian_town
+msgid "Towns"
+msgstr "Obce"
+
+#. module: ruian
+#. odoo-python
+#: code:addons/ruian/models/ruian_import.py:0
+msgid "Unknown"
+msgstr "Neznámé"
+
+#. module: ruian
+#: model:ir.model,name:ruian.model_ruian_number
+msgid "ruian.number"
+msgstr "ruian.číslo"
+
+#. module: ruian
+#: model:ir.model,name:ruian.model_ruian_street
+msgid "ruian.street"
+msgstr "ruian.ulice"
+
+#. module: ruian
+#: model:ir.model,name:ruian.model_ruian_town
+msgid "ruian.town"
+msgstr "ruian.obec"

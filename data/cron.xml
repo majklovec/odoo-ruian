@@ -1,10 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="ir_cron_ruian_import" model="ir.cron">
+    <record id="ir_cron_ruian_monthly_import" model="ir.cron">
         <field name="name">RUIAN: Monthly Import</field>
         <field name="model_id" ref="model_ruian_import"/>
         <field name="state">code</field>
         <field name="code">model.run_ruian_import()</field>
         <field name="interval_number">1</field>
         <field name="interval_type">months</field>
+        <field name="user_id" ref="base.user_root"/>
+        <field name="active">True</field>
     </record>
 </odoo>

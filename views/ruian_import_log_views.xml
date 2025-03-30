@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_ruian_import_log_list" model="ir.ui.view">
+        <field name="name">ruian.import.log.list</field>
+        <field name="model">ruian.import.log</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="start_date"/>
+                <field name="state"/>
+                <field name="processed_rows"/>
+                <field name="created_towns"/>
+                <field name="created_streets"/>
+                <field name="created_numbers"/>
+                <field name="warnings"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_ruian_import_log_form" model="ir.ui.view">
+        <field name="name">ruian.import.log.form</field>
+        <field name="model">ruian.import.log</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="state"/>
+                        <field name="start_date"/>
+                        <field name="end_date"/>
+                        <field name="duration"/>
+                        <field name="user_id"/>
+                    </group>
+                    <group>
+                        <field name="processed_rows"/>
+                        <field name="created_towns"/>
+                        <field name="created_streets"/>
+                        <field name="created_numbers"/>
+                        <field name="warnings"/>
+                    </group>
+                    <group>
+                        <field name="error_message"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

@@ -12,11 +12,11 @@
     "data": [
         "security/ir.model.access.csv",
         "data/cron.xml",
-        "views/partner_views.xml",
+        "views/res_partner_views.xml",
         "views/ruian_views.xml",
+        "views/ruian_import_log_views.xml",
     ],
     "icon": "/ruian/static/description/icon.png",
-    "external_dependencies": {"python": ["requests", "zipfile", "csv"]},
     "installable": True,
     "application": True,
     "license": "LGPL-3",
