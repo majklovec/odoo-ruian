@@ -4,8 +4,19 @@
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="base.view_partner_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='street']" position="after">
+            <!-- Add RUIAN to the main partner form after country -->
+            <xpath expr="//field[@name='country_id']" position="after">
+                <field name="ruian_code" placeholder="RUIAN..." />
+            </xpath>
+
+            <!-- Add RUIAN to the contacts (child) kanban view -->
+            <xpath expr="//field[@name='child_ids']/kanban//field[@name='country_id']" position="after">
                 <field name="ruian_code"/>
+            </xpath>
+
+            <!-- Add RUIAN to the contacts (child) form view -->
+            <xpath expr="//field[@name='child_ids']/form//div[@name='div_address']/field[@name='country_id']" position="after">
+                <field name="ruian_code" placeholder="RUIAN..." />
             </xpath>
         </field>
     </record>
