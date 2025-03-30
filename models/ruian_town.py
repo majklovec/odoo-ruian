@@ -5,7 +5,7 @@ from odoo.tools.translate import _
 class RuianTown(models.Model):
     _name = "ruian.town"
     _description = "RUIAN Towns"
-    _order = "name desc"
+    _order = "name"
 
     code = fields.Integer(required=True)
     name = fields.Char(required=True)
