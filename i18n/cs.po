@@ -15,7 +15,7 @@ msgstr ""
 #: model:ir.actions.act_window,name:ruian.action_ruian_number
 #: model:ir.ui.menu,name:ruian.menu_ruian_number
 msgid "Address Numbers"
-msgstr "Číslování adres"
+msgstr "Čísla popisná"
 
 #. module: ruian
 #: model:ir.model.fields,field_description:ruian.field_ruian_street__town_ids

@@ -1,0 +1,33 @@
+<odoo>
+    <record id="view_ruian_number_list" model="ir.ui.view">
+        <field name="name">ruian.number.list</field>
+        <field name="model">ruian.number</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="street_id"/>
+                <field name="town_id"/>
+            </list>
+        </field>
+    </record>
+
+
+    <record id="view_ruian_number_form" model="ir.ui.view">
+        <field name="name">ruian.number.form</field>
+        <field name="model">ruian.number</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="full_address" readonly="1"/>
+                        <field name="name"/>
+                        <field name="street_id" />
+                        <field name="town_id" />
+                        <field name="coord_x"/>
+                        <field name="coord_y"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

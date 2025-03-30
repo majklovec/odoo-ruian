@@ -6,5 +6,5 @@ from . import ruian_number
 from . import ruian_street
 from . import ruian_town
 
-from . import ruian_import_log
+from . import ruian_log
 from . import ruian_import

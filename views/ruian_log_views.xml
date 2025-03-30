@@ -1,0 +1,45 @@
+<odoo>
+    <record id="view_ruian_log_list" model="ir.ui.view">
+        <field name="name">ruian.log.list</field>
+        <field name="model">ruian.log</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="start_date"/>
+                <field name="end_date"/>
+                <field name="duration"/>
+                <field name="state"/>
+                <field name="rows"/>
+                <field name="towns"/>
+                <field name="streets"/>
+                <field name="numbers"/>
+                <field name="warnings"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_ruian_log_form" model="ir.ui.view">
+        <field name="name">ruian.log.form</field>
+        <field name="model">ruian.log</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="state"/>
+                        <field name="start_date"/>
+                        <field name="end_date"/>
+                        <field name="duration"/>
+                    </group>
+                    <group>
+                        <field name="rows"/>
+                        <field name="towns"/>
+                        <field name="streets"/>
+                        <field name="numbers"/>
+                        <field name="warnings"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

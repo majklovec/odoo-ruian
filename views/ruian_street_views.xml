@@ -1,0 +1,35 @@
+<odoo>
+    <record id="view_ruian_street_list" model="ir.ui.view">
+        <field name="name">ruian.street.list</field>
+        <field name="model">ruian.street</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+            </list>
+        </field>
+    </record>
+    <record id="view_ruian_street_form" model="ir.ui.view">
+        <field name="name">ruian.street.form</field>
+        <field name="model">ruian.street</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                    </group>
+
+                    <field name="number_ids">
+                        <list>
+                            <field name="full_address"/>
+                        </list>
+                        <form>
+                            <field name="name"/>
+                            <field name="street_id"/>
+                            <field name="town_id" />
+                        </form>
+                    </field>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

@@ -13,7 +13,7 @@ class RuianNumber(models.Model):
     coord_y = fields.Float(digits=(9, 6))
 
     town_id = fields.Many2one("ruian.town", string="Town")
-    street_ids = fields.Many2many("ruian.street", string="Streets")
+    street_id = fields.Many2one("ruian.street", string="Street")
 
     full_address = fields.Char(compute="_compute_full_address")
 
@@ -23,6 +23,7 @@ class RuianNumber(models.Model):
 
     def _compute_full_address(self):
         for record in self:
-            streets = ", ".join(record.street_ids.mapped("name"))
-            towns = ", ".join(record.town_ids.mapped("name"))
-            record.full_address = f"{record.name}, {streets}, {towns}"
+            street = record.street_id.name if record.street_id else ""
+            town = record.town_id.name if record.town_id else ""
+            psc = record.town_id.postal_code if record.town_id else ""
+            record.full_address = f"{street} {record.name}, {town} {psc}"

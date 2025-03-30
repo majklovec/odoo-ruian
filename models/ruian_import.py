@@ -31,27 +31,44 @@ class RuianImport(models.Model):
         domovni = record.get("Číslo domovní", "").strip()
         return domovni if domovni else _("Unknown")
 
+    def _get_town_name(self, record):
+        town = record.get("Název obce", "").strip()
+        part = record.get("Název části obce", "").strip()
+
+        if part and part != town:
+            return f"{town} - {part}"
+        else:
+            return town
+
     def run_ruian_import(self):
         """Main import method with full error handling and progress tracking"""
         _logger.info("=== Starting RUIAN import process ===")
+
+        today = fields.Date.today()
+        target_date = (today.replace(day=1) - timedelta(days=1)).strftime("%Y%m%d")
+
         start_time = datetime.now()
 
+        log = self.env["ruian.log"].create(
+            {
+                "name": target_date,
+                "state": "running",
+                "start_date": fields.Datetime.now(),
+            }
+        )
+
         try:
-            # Phase 1: Data cleanup
+
             self._clear_existing_data()
             self.env.cr.commit()
             _logger.info("✅ Database cleared and committed")
 
-            # Phase 2: Data download
-            today = fields.Date.today()
-            target_date = (today.replace(day=1) - timedelta(days=1)).strftime("%Y%m%d")
             zip_file = self._download_zip(target_date)
             file_count = sum(
                 1 for f in zip_file.infolist() if f.filename.endswith(".csv")
             )
             _logger.info("📦 Archive contains %d CSV files", file_count)
 
-            # Phase 3: Data processing
             processed_files = 0
             global_stats = {
                 "towns": 0,
@@ -61,9 +78,9 @@ class RuianImport(models.Model):
                 "warnings": 0,
             }
 
-            towns = {}  # {town_code: record}
-            streets = {}  # {street_name: record}
-            numbers = {}  # {number_code: record}
+            towns = {}
+            streets = {}
+            numbers = {}
 
             for zip_info in zip_file.infolist():
                 if not zip_info.filename.endswith(".csv"):
@@ -87,12 +104,8 @@ class RuianImport(models.Model):
                         file_stats = self._process_csv_file(
                             reader, towns, streets, numbers, global_stats
                         )
-
-                    # Commit after successful file processing
                     self.env.cr.commit()
-                    _logger.info("💾 Committed changes after %s", zip_info.filename)
 
-                    # File summary
                     duration = (datetime.now() - file_start).total_seconds()
                     _logger.info(
                         "✅ Processed %d rows in %.2fs (T+:%d S+:%d N+:%d W:%d)",
@@ -111,11 +124,6 @@ class RuianImport(models.Model):
                     )
                     global_stats["warnings"] += 1
 
-            # Final commit and cleanup
-            self.env.cr.commit()
-            _logger.info("💾 Final commit completed")
-
-            # Phase 4: Final report
             total_duration = (datetime.now() - start_time).total_seconds()
             _logger.info("=" * 60)
             _logger.info("🏁 Import completed in %.2f seconds", total_duration)
@@ -127,6 +135,20 @@ class RuianImport(models.Model):
             )
             _logger.info("⚠️  Warnings: %d", global_stats["warnings"])
             _logger.info("=" * 60)
+
+            log.write(
+                {
+                    "state": "done",
+                    "end_date": fields.Datetime.now(),
+                    "rows": global_stats["rows"],
+                    "towns": global_stats["towns"],
+                    "streets": global_stats["streets"],
+                    "numbers": global_stats["numbers"],
+                    "warnings": global_stats["warnings"],
+                }
+            )
+            self.env.cr.commit()
+            _logger.info("💾 Final commit completed")
 
         except Exception as e:
             self.env.cr.rollback()
@@ -147,25 +169,20 @@ class RuianImport(models.Model):
             file_stats["rows"] += 1
             global_stats["rows"] += 1
 
-            # Progress logging
             if file_stats["rows"] % self._progress_step == 0:
                 _logger.debug("⏳ Processed %d rows...", file_stats["rows"])
 
             try:
-                # Process Town
                 town = self._process_town(record, towns, file_stats, global_stats)
 
-                # Process Street
                 street = self._process_street(
                     record, streets, town, file_stats, global_stats
                 )
 
-                # Process Number
                 self._process_number(
                     record, numbers, town, street, file_stats, global_stats
                 )
 
-                # Intermediate commit for large files
                 if file_stats["rows"] % 10000 == 0:
                     self.env.cr.commit()
                     _logger.debug(
@@ -192,7 +209,7 @@ class RuianImport(models.Model):
 
             town_data = {
                 "code": town_code,
-                "name": record.get("Název obce", "").strip(),
+                "name": self._get_town_name(record),
                 "postal_code": record.get("PSČ", "").strip(),
             }
 
@@ -226,7 +243,6 @@ class RuianImport(models.Model):
             global_stats["streets"] += 1
             _logger.debug("➕ Created street: %s", street_name)
 
-        # Link street to town if needed
         if town and town.id not in street.town_ids.ids:
             street.write({"town_ids": [(4, town.id)]})
             _logger.debug("🔗 Linked street %s to town %s", street_name, town.name)
@@ -250,6 +266,7 @@ class RuianImport(models.Model):
                     "coord_x": self._safe_float(record.get("Souřadnice X")),
                     "coord_y": self._safe_float(record.get("Souřadnice Y")),
                     "town_id": town.id if town else False,
+                    "street_id": street.id if street else False,
                 }
 
                 if not number_data["name"]:
@@ -263,7 +280,6 @@ class RuianImport(models.Model):
                     "➕ Created number: %s (%d)", number_data["name"], number_code
                 )
 
-            # Link number to street
             if street and number.id not in street.number_ids.ids:
                 street.write({"number_ids": [(4, number.id)]})
                 _logger.debug(
@@ -285,7 +301,6 @@ class RuianImport(models.Model):
             "ruian_town",
         ]
         for table in tables:
-            # Check if the table exists in the public schema
             self.env.cr.execute(
                 "SELECT EXISTS (SELECT 1 FROM pg_tables WHERE tablename = %s AND schemaname = 'public')",
                 (table,),
@@ -300,27 +315,16 @@ class RuianImport(models.Model):
         _logger.info("Data cleared successfully")
 
     def _download_zip(self, target_date):
-        """Secure file download with progress tracking"""
+        """Secure file download without chunking"""
         url = f"https://vdp.cuzk.gov.cz/vymenny_format/csv/{target_date}_OB_ADR_csv.zip"
         _logger.info("⬇️ Downloading from: %s", url)
 
         try:
             start = datetime.now()
-            response = requests.get(url, stream=True, timeout=30)
+            response = requests.get(url, timeout=30)
             response.raise_for_status()
 
-            # Stream download with progress
-            total_size = int(response.headers.get("content-length", 0))
-            zip_buffer = BytesIO()
-            downloaded = 0
-
-            for chunk in response.iter_content(chunk_size=128 * 1024):
-                if chunk:
-                    zip_buffer.write(chunk)
-                    downloaded += len(chunk)
-                    if total_size > 0:
-                        progress = (downloaded / total_size) * 100
-                        _logger.debug("⏬ Download progress: %.1f%%", progress)
+            zip_buffer = BytesIO(response.content)
 
             _logger.info(
                 "📥 Downloaded %.2f MB in %.2fs",
@@ -328,7 +332,6 @@ class RuianImport(models.Model):
                 (datetime.now() - start).total_seconds(),
             )
 
-            # Validate ZIP
             zip_file = zipfile.ZipFile(zip_buffer)
             if corrupt := zip_file.testzip():
                 raise zipfile.BadZipFile(f"Corrupt file: {corrupt}")
