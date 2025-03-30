@@ -24,11 +24,12 @@ class RuianImport(models.Model):
             return 0.0
 
     def _get_number_name(self, record):
+        domovni = record.get("Číslo domovní", "").strip()
         orient_number = record.get("Číslo orientační", "").strip()
         orient_letter = record.get("Číslo orientační písmeno", "").strip()
-        if orient_number or orient_letter:
-            return " ".join(filter(None, [orient_number, orient_letter]))
-        domovni = record.get("Číslo domovní", "").strip()
+
+        if orient_number:
+            return f"{domovni}/{orient_number}{orient_letter}".strip()
         return domovni if domovni else _("Unknown")
 
     def _get_town_name(self, record):
@@ -281,14 +282,14 @@ class RuianImport(models.Model):
             return None
 
         try:
-            street_key = (street_name, town.id if town else None)
+            street_key = street_name  # (street_name, town.id if town else None)
             if street_key in streets:
                 return streets[street_key]
 
             existing = self.env["ruian.street"].search(
                 [
                     ("name", "=", street_name),
-                    ("town_ids", "in", [town.id] if town else []),
+                    # ("town_ids", "in", [town.id] if town else []),
                 ],
                 limit=1,
             )
