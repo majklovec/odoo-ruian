@@ -41,30 +41,34 @@ class RuianImport(models.Model):
             return town
 
     def run_ruian_import(self):
-        """Main import method with full error handling and progress tracking"""
-        _logger.info("=== Starting RUIAN import process ===")
-
+        """Main import method with guaranteed log updates"""
+        _logger.info("=== Starting RUIAN import ===")
+        start_time = datetime.now()
         today = fields.Date.today()
         target_date = (today.replace(day=1) - timedelta(days=1)).strftime("%Y%m%d")
 
-        start_time = datetime.now()
+        # Initialize log record
+        log = self.env["ruian.log"].create(
+            {
+                "name": target_date,
+                "state": "running",
+                "start_date": fields.Datetime.now(),
+            }
+        )
+        self.env.cr.commit()
 
         try:
+            # Download and prepare data
             zip_file = self._download_zip(target_date)
             file_count = sum(
                 1 for f in zip_file.infolist() if f.filename.endswith(".csv")
             )
-            _logger.info("📦 Archive contains %d CSV files", file_count)
+            log.file_count = file_count
+            self.env.cr.commit()
 
-            log = self.env["ruian.log"].create(
-                {
-                    "name": target_date,
-                    "state": "running",
-                    "start_date": fields.Datetime.now(),
-                    "file_count": file_count,
-                }
-            )
+            _logger.info("Found %d CSV files in archive", file_count)
 
+            # Initialize counters
             processed_files = 0
             global_stats = {
                 "towns": 0,
@@ -72,8 +76,10 @@ class RuianImport(models.Model):
                 "numbers": 0,
                 "rows": 0,
                 "warnings": 0,
+                "files": 0,
             }
 
+            # Caches for existing records
             towns = {}
             streets = {}
             numbers = {}
@@ -84,8 +90,8 @@ class RuianImport(models.Model):
 
                 processed_files += 1
                 file_start = datetime.now()
-                _logger.info(
-                    "📁 Processing file %d/%d: %s",
+                _logger.debug(
+                    "Processing file %d/%d: %s",
                     processed_files,
                     file_count,
                     zip_info.filename,
@@ -101,80 +107,79 @@ class RuianImport(models.Model):
                             reader, towns, streets, numbers, global_stats
                         )
 
+                    # Update global statistics
+                    global_stats["files"] = processed_files
                     duration = (datetime.now() - file_start).total_seconds()
+
                     _logger.info(
-                        "✅ Processed %d rows in %.2fs (T+:%d S+:%d N+:%d W:%d)",
+                        "File %s processed: %d rows, %d towns, %d streets, %d numbers in %.2fs",
+                        zip_info.filename,
                         file_stats["rows"],
-                        duration,
                         file_stats["new_towns"],
                         file_stats["new_streets"],
                         file_stats["new_numbers"],
-                        file_stats["warnings"],
-                    )
-
-                    _logger.info(
-                        "✅ Global %d files, %d rows in %.2fs (T+:%d S+:%d N+:%d W:%d)",
-                        processed_files,
-                        global_stats["rows"],
                         duration,
-                        global_stats["new_towns"],
-                        global_stats["new_streets"],
-                        global_stats["new_numbers"],
-                        global_stats["warnings"],
                     )
 
+                    # Update log with current state
                     log.write(
                         {
+                            "files": global_stats["files"],
                             "rows": global_stats["rows"],
                             "towns": global_stats["towns"],
                             "streets": global_stats["streets"],
                             "numbers": global_stats["numbers"],
                             "warnings": global_stats["warnings"],
-                            "files": processed_files,
                         }
                     )
                     self.env.cr.commit()
 
                 except Exception as e:
-                    self.env.cr.rollback()
                     _logger.error(
-                        "🚨 Rolling back changes for %s: %s", zip_info.filename, str(e)
+                        "File processing failed: %s - %s", zip_info.filename, str(e)
                     )
                     global_stats["warnings"] += 1
+                    self.env.cr.rollback()
+                    continue
 
+            # Final log update
             total_duration = (datetime.now() - start_time).total_seconds()
-            _logger.info("=" * 60)
-            _logger.info("🏁 Import completed in %.2f seconds", total_duration)
-            _logger.info(
-                "📊 Totals - Towns: %d, Streets: %d, Numbers: %d",
-                global_stats["towns"],
-                global_stats["streets"],
-                global_stats["numbers"],
-            )
-            _logger.info("⚠️  Warnings: %d", global_stats["warnings"])
-            _logger.info("=" * 60)
-
             log.write(
                 {
                     "state": "done",
                     "end_date": fields.Datetime.now(),
-                    "rows": global_stats["rows"],
-                    "towns": global_stats["towns"],
-                    "streets": global_stats["streets"],
-                    "numbers": global_stats["numbers"],
-                    "warnings": global_stats["warnings"],
+                    "duration": total_duration,
                 }
             )
             self.env.cr.commit()
-            _logger.info("💾 Final commit completed")
+
+            _logger.info(
+                "Import completed: %d files, %d rows, %d towns, %d streets, %d numbers in %.2fs",
+                processed_files,
+                global_stats["rows"],
+                global_stats["towns"],
+                global_stats["streets"],
+                global_stats["numbers"],
+                total_duration,
+            )
 
         except Exception as e:
             self.env.cr.rollback()
-            _logger.error("🚨 Critical import failure: %s", str(e), exc_info=True)
+            log.write(
+                {
+                    "state": "failed",
+                    "end_date": fields.Datetime.now(),
+                    "error_message": str(e)[:500],
+                }
+            )
+            self.env.cr.commit()
+            _logger.error("Import failed: %s", str(e))
             raise UserError(_("Import failed: %s") % str(e)) from e
 
+        return True
+
     def _process_csv_file(self, reader, towns, streets, numbers, global_stats):
-        """Process individual CSV file with batch optimizations"""
+        """Process individual CSV file with progress tracking"""
         file_stats = {
             "rows": 0,
             "new_towns": 0,
@@ -187,73 +192,59 @@ class RuianImport(models.Model):
             file_stats["rows"] += 1
             global_stats["rows"] += 1
 
+            # Progress logging
             if file_stats["rows"] % self._progress_step == 0:
-                _logger.debug("⏳ Processed %d rows...", file_stats["rows"])
+                _logger.debug("Processed %d rows...", file_stats["rows"])
+                self.env.cr.commit()
 
             try:
+                # Process records
                 town = self._process_town(record, towns, file_stats, global_stats)
-
                 street = self._process_street(
                     record, streets, town, file_stats, global_stats
                 )
-
                 self._process_number(
                     record, numbers, town, street, file_stats, global_stats
                 )
 
-                if file_stats["rows"] % 10000 == 0:
-                    self.env.cr.commit()
-                    _logger.debug(
-                        "💾 Intermediate commit at row %d", file_stats["rows"]
-                    )
-
             except Exception as e:
-                _logger.warning("⚠️ Row %d error: %s", file_stats["rows"], str(e))
                 file_stats["warnings"] += 1
                 global_stats["warnings"] += 1
+                _logger.warning("Row error: %s", str(e))
 
         return file_stats
 
     def _download_zip(self, target_date):
-        """Secure file download without chunking"""
+        """Secure ZIP file download"""
         url = f"https://vdp.cuzk.gov.cz/vymenny_format/csv/{target_date}_OB_ADR_csv.zip"
-        _logger.info("⬇️ Downloading from: %s", url)
+        _logger.info("Downloading ZIP from: %s", url)
 
         try:
-            start = datetime.now()
             response = requests.get(url, timeout=30)
             response.raise_for_status()
 
-            zip_buffer = BytesIO(response.content)
-
-            _logger.info(
-                "📥 Downloaded %.2f MB in %.2fs",
-                len(zip_buffer.getvalue()) / (1024 * 1024),
-                (datetime.now() - start).total_seconds(),
-            )
-
-            zip_file = zipfile.ZipFile(zip_buffer)
+            zip_file = zipfile.ZipFile(BytesIO(response.content))
             if corrupt := zip_file.testzip():
                 raise zipfile.BadZipFile(f"Corrupt file: {corrupt}")
 
-            _logger.info("📦 Validated ZIP with %d files", len(zip_file.infolist()))
+            _logger.info("Downloaded valid ZIP archive")
             return zip_file
 
         except requests.RequestException as e:
-            _logger.error("🚨 Download failed: %s", str(e))
+            _logger.error("Download failed: %s", str(e))
             raise UserError(_("Download failed: %s") % str(e)) from e
         except zipfile.BadZipFile as e:
-            _logger.error("🚨 Corrupted ZIP: %s", str(e))
+            _logger.error("Invalid ZIP file: %s", str(e))
             raise UserError(_("Invalid ZIP archive")) from e
 
     def _process_town(self, record, towns, file_stats, global_stats):
-        """Handle town creation and validation"""
-        town_code_str = record.get("Kód části obce")
-        if not town_code_str:
+        """Process town record with caching"""
+        town_code = record.get("Kód části obce")
+        if not town_code:
             return None
 
         try:
-            town_code = int(town_code_str)
+            town_code = int(town_code)
             if town_code in towns:
                 return towns[town_code]
 
@@ -263,57 +254,74 @@ class RuianImport(models.Model):
                 "postal_code": record.get("PSČ", "").strip(),
             }
 
-            existing_town = self.env["ruian.town"].search(
+            existing = self.env["ruian.town"].search(
                 [("code", "=", town_code)], limit=1
             )
-            if existing_town:
-                existing_town.write(town_data)
-                town = existing_town
+            if existing:
+                existing.write(town_data)
+                town = existing
             else:
                 town = self.env["ruian.town"].create(town_data)
                 file_stats["new_towns"] += 1
                 global_stats["towns"] += 1
 
             towns[town_code] = town
-            _logger.debug("✅ Upserted town: %s (%d)", town_data["name"], town_code)
             return town
 
         except Exception as e:
-            _logger.warning("⚠️ Town error in row %d: %s", file_stats["rows"], str(e))
+            _logger.warning("Town processing error: %s", str(e))
             file_stats["warnings"] += 1
+            global_stats["warnings"] += 1
             return None
 
     def _process_street(self, record, streets, town, file_stats, global_stats):
-        """Handle street creation and town linking"""
+        """Process street record with town association"""
         street_name = record.get("Název ulice", "").strip()
         if not street_name:
             return None
 
-        existing_street = self.env["ruian.street"].search(
-            [("name", "=", street_name)], limit=1
-        )
-        if existing_street:
-            street = existing_street
-        else:
-            street = self.env["ruian.street"].create({"name": street_name})
-            file_stats["new_streets"] += 1
-            global_stats["streets"] += 1
+        try:
+            street_key = (street_name, town.id if town else None)
+            if street_key in streets:
+                return streets[street_key]
 
-        streets[street_name] = street
-        if town and town.id not in street.town_ids.ids:
-            street.write({"town_ids": [(4, town.id)]})
+            existing = self.env["ruian.street"].search(
+                [
+                    ("name", "=", street_name),
+                    ("town_ids", "in", [town.id] if town else []),
+                ],
+                limit=1,
+            )
 
-        _logger.debug("✅ Upserted street: %s", street_name)
-        return street
+            if existing:
+                street = existing
+            else:
+                street = self.env["ruian.street"].create({"name": street_name})
+                file_stats["new_streets"] += 1
+                global_stats["streets"] += 1
+
+            if town and town.id not in street.town_ids.ids:
+                street.write({"town_ids": [(4, town.id)]})
+
+            streets[street_key] = street
+            return street
+
+        except Exception as e:
+            _logger.warning("Street processing error: %s", str(e))
+            file_stats["warnings"] += 1
+            global_stats["warnings"] += 1
+            return None
 
     def _process_number(self, record, numbers, town, street, file_stats, global_stats):
-        """Handle number creation and relationships"""
-        number_code_str = record.get("Kód ADM")
-        if not number_code_str:
+        """Process address number with geocoordinates"""
+        number_code = record.get("Kód ADM")
+        if not number_code:
             return
 
         try:
-            number_code = int(number_code_str)
+            number_code = int(number_code)
+            if number_code in numbers:
+                return numbers[number_code]
 
             number_data = {
                 "code": number_code,
@@ -324,26 +332,25 @@ class RuianImport(models.Model):
                 "street_id": street.id if street else False,
             }
 
-            existing_number = self.env["ruian.number"].search(
+            existing = self.env["ruian.number"].search(
                 [("code", "=", number_code)], limit=1
             )
-            if existing_number:
-                existing_number.write(number_data)
-                number = existing_number
+            if existing:
+                existing.write(number_data)
+                number = existing
             else:
                 number = self.env["ruian.number"].create(number_data)
                 file_stats["new_numbers"] += 1
                 global_stats["numbers"] += 1
 
-            numbers[number_code] = number
-
             if street and number.id not in street.number_ids.ids:
                 street.write({"number_ids": [(4, number.id)]})
 
-            _logger.debug(
-                "✅ Upserted number: %s (%d)", number_data["name"], number_code
-            )
+            numbers[number_code] = number
+            return number
 
         except Exception as e:
-            _logger.warning("⚠️ Number error in row %d: %s", file_stats["rows"], str(e))
+            _logger.warning("Number processing error: %s", str(e))
             file_stats["warnings"] += 1
+            global_stats["warnings"] += 1
+            return None

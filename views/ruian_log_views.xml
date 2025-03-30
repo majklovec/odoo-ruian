@@ -10,18 +10,19 @@
         <field name="model">ruian.log</field>
         <field name="arch" type="xml">
             <list>
-                <field name="name"/>
+                <field name="state"/>
                 <field name="start_date"/>
                 <field name="end_date"/>
+                <field name="name"/>
                 <field name="duration"/>
-                <field name="state"/>
                 <field name="rows"/>
                 <field name="files"/>
                 <field name="file_count"/>
                 <field name="towns"/>
                 <field name="streets"/>
                 <field name="numbers"/>
-                <field name="warnings"/>
+                <field name="warnings" optional="hide"/>
+                <field name="error_message" optional="hide" />
             </list>
         </field>
     </record>
@@ -33,10 +34,10 @@
             <form>
                 <sheet>
                     <group>
-                        <field name="name"/>
                         <field name="state"/>
                         <field name="start_date"/>
                         <field name="end_date"/>
+                        <field name="name"/>
                         <field name="duration"/>
                     </group>
                     <group>
@@ -46,7 +47,8 @@
                         <field name="towns"/>
                         <field name="streets"/>
                         <field name="numbers"/>
-                        <field name="warnings"/>
+                        <field name="warnings" optional="hide"/>
+                        <field name="error_message" optional="hide" />
                     </group>
                 </sheet>
             </form>

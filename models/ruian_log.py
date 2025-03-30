@@ -26,12 +26,12 @@ class RuianImportLog(models.Model):
         readonly=True,
     )
     state = fields.Selection(
-        [("running", "Running"), ("done", "Done")],
+        [("running", "Running"), ("failed", "Failed"), ("done", "Done")],
         string="Status",
-        compute="_compute_state",
-        store=True,
         readonly=True,
     )
+
+    error_message = fields.Char(string="Error message", readonly=True, index=True)
 
     @api.depends("start_date", "end_date")
     def _compute_duration(self):
@@ -43,8 +43,3 @@ class RuianImportLog(models.Model):
                 log.duration = delta.total_seconds() / 3600  # Convert seconds to hours
             else:
                 log.duration = 0.0
-
-    @api.depends("end_date")
-    def _compute_state(self):
-        for log in self:
-            log.state = "done" if log.end_date else "running"
