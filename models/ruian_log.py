@@ -11,13 +11,16 @@ class RuianImportLog(models.Model):
     start_date = fields.Datetime(string="Start Time", readonly=True)
     end_date = fields.Datetime(string="End Time", readonly=True)
     rows = fields.Integer(string="Rows", readonly=True)
+    files = fields.Integer(string="Files", readonly=True)
+    file_count = fields.Integer(string="File count", readonly=True)
     towns = fields.Integer(string="Towns", readonly=True)
     streets = fields.Integer(string="Streets", readonly=True)
     numbers = fields.Integer(string="Numbers", readonly=True)
     warnings = fields.Integer(string="Warnings", readonly=True)
 
     duration = fields.Float(
-        string="Duration (Hours)",
+        string="Duration",
+        help="duration in hours",
         compute="_compute_duration",
         store=True,
         readonly=True,

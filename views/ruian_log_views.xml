@@ -1,4 +1,10 @@
 <odoo>
+    <record id="action_ruian_log" model="ir.actions.act_window">
+        <field name="name">RUIAN Log</field>
+        <field name="res_model">ruian.log</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
     <record id="view_ruian_log_list" model="ir.ui.view">
         <field name="name">ruian.log.list</field>
         <field name="model">ruian.log</field>
@@ -10,6 +16,8 @@
                 <field name="duration"/>
                 <field name="state"/>
                 <field name="rows"/>
+                <field name="files"/>
+                <field name="file_count"/>
                 <field name="towns"/>
                 <field name="streets"/>
                 <field name="numbers"/>
@@ -33,6 +41,8 @@
                     </group>
                     <group>
                         <field name="rows"/>
+                        <field name="files"/>
+                        <field name="file_count"/>
                         <field name="towns"/>
                         <field name="streets"/>
                         <field name="numbers"/>

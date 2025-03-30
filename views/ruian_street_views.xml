@@ -1,4 +1,10 @@
 <odoo>
+    <record id="action_ruian_street" model="ir.actions.act_window">
+        <field name="name">RUIAN Streets</field>
+        <field name="res_model">ruian.street</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
     <record id="view_ruian_street_list" model="ir.ui.view">
         <field name="name">ruian.street.list</field>
         <field name="model">ruian.street</field>

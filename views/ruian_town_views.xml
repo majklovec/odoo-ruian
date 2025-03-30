@@ -1,4 +1,14 @@
 <odoo>
+    <record id="action_ruian_town" model="ir.actions.act_window">
+        <field name="name">RUIAN Towns</field>
+        <field name="res_model">ruian.town</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Configure Czech towns and municipalities
+            </p>
+        </field>
+    </record>
     <record id="view_ruian_town_list" model="ir.ui.view">
         <field name="name">ruian.town.list</field>
         <field name="model">ruian.town</field>

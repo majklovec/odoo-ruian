@@ -1,4 +1,10 @@
 <odoo>
+    <record id="action_ruian_number" model="ir.actions.act_window">
+        <field name="name">RUIAN Address Numbers</field>
+        <field name="res_model">ruian.number</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
     <record id="view_ruian_number_list" model="ir.ui.view">
         <field name="name">ruian.number.list</field>
         <field name="model">ruian.number</field>

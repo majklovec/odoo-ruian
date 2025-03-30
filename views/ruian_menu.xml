@@ -1,46 +1,7 @@
 <odoo>
-    <!-- RUIAN Menu Structure -->
     <menuitem id="menu_ruian_config" name="RUIAN" parent="base.menu_custom" sequence="100"/>
-
-    <!-- Town Configuration -->
-    <record id="action_ruian_town" model="ir.actions.act_window">
-        <field name="name">Towns</field>
-        <field name="res_model">ruian.town</field>
-        <field name="view_mode">list,form</field>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                Configure Czech towns and municipalities
-            </p>
-        </field>
-    </record>
-
     <menuitem id="menu_ruian_town" name="Towns" parent="menu_ruian_config" action="action_ruian_town" sequence="10"/>
-
-    <!-- Street Configuration -->
-    <record id="action_ruian_street" model="ir.actions.act_window">
-        <field name="name">Streets</field>
-        <field name="res_model">ruian.street</field>
-        <field name="view_mode">list,form</field>
-    </record>
-
     <menuitem id="menu_ruian_street" name="Streets" parent="menu_ruian_config" action="action_ruian_street" sequence="20"/>
-
-    <!-- Number Configuration -->
-    <record id="action_ruian_number" model="ir.actions.act_window">
-        <field name="name">Address Numbers</field>
-        <field name="res_model">ruian.number</field>
-        <field name="view_mode">list,form</field>
-    </record>
-
     <menuitem id="menu_ruian_number" name="Address Numbers" parent="menu_ruian_config" action="action_ruian_number" sequence="30"/>
-
-    <!-- Log Configuration -->
-    <record id="action_ruian_log" model="ir.actions.act_window">
-        <field name="name">Log</field>
-        <field name="res_model">ruian.log</field>
-        <field name="view_mode">list,form</field>
-    </record>
-
     <menuitem id="menu_ruian_log" name="Log" parent="menu_ruian_config" action="action_ruian_log" sequence="30"/>
-
 </odoo>

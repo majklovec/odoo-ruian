@@ -49,25 +49,21 @@ class RuianImport(models.Model):
 
         start_time = datetime.now()
 
-        log = self.env["ruian.log"].create(
-            {
-                "name": target_date,
-                "state": "running",
-                "start_date": fields.Datetime.now(),
-            }
-        )
-
         try:
-
-            self._clear_existing_data()
-            self.env.cr.commit()
-            _logger.info("✅ Database cleared and committed")
-
             zip_file = self._download_zip(target_date)
             file_count = sum(
                 1 for f in zip_file.infolist() if f.filename.endswith(".csv")
             )
             _logger.info("📦 Archive contains %d CSV files", file_count)
+
+            log = self.env["ruian.log"].create(
+                {
+                    "name": target_date,
+                    "state": "running",
+                    "start_date": fields.Datetime.now(),
+                    "file_count": file_count,
+                }
+            )
 
             processed_files = 0
             global_stats = {
@@ -104,7 +100,6 @@ class RuianImport(models.Model):
                         file_stats = self._process_csv_file(
                             reader, towns, streets, numbers, global_stats
                         )
-                    self.env.cr.commit()
 
                     duration = (datetime.now() - file_start).total_seconds()
                     _logger.info(
@@ -116,6 +111,29 @@ class RuianImport(models.Model):
                         file_stats["new_numbers"],
                         file_stats["warnings"],
                     )
+
+                    _logger.info(
+                        "✅ Global %d files, %d rows in %.2fs (T+:%d S+:%d N+:%d W:%d)",
+                        processed_files,
+                        global_stats["rows"],
+                        duration,
+                        global_stats["new_towns"],
+                        global_stats["new_streets"],
+                        global_stats["new_numbers"],
+                        global_stats["warnings"],
+                    )
+
+                    log.write(
+                        {
+                            "rows": global_stats["rows"],
+                            "towns": global_stats["towns"],
+                            "streets": global_stats["streets"],
+                            "numbers": global_stats["numbers"],
+                            "warnings": global_stats["warnings"],
+                            "files": processed_files,
+                        }
+                    )
+                    self.env.cr.commit()
 
                 except Exception as e:
                     self.env.cr.rollback()
@@ -196,124 +214,6 @@ class RuianImport(models.Model):
 
         return file_stats
 
-    def _process_town(self, record, towns, file_stats, global_stats):
-        """Handle town creation and validation"""
-        town_code_str = record.get("Kód části obce")
-        if not town_code_str:
-            return None
-
-        try:
-            town_code = int(town_code_str)
-            if town_code in towns:
-                return towns[town_code]
-
-            town_data = {
-                "code": town_code,
-                "name": self._get_town_name(record),
-                "postal_code": record.get("PSČ", "").strip(),
-            }
-
-            if not town_data["name"] or not town_data["postal_code"]:
-                raise ValueError("Invalid town data - missing name or postal code")
-
-            town = self.env["ruian.town"].create(town_data)
-            towns[town_code] = town
-            file_stats["new_towns"] += 1
-            global_stats["towns"] += 1
-            _logger.debug("➕ Created town: %s (%d)", town_data["name"], town_code)
-            return town
-
-        except Exception as e:
-            _logger.warning("⚠️ Town error in row %d: %s", file_stats["rows"], str(e))
-            file_stats["warnings"] += 1
-            return None
-
-    def _process_street(self, record, streets, town, file_stats, global_stats):
-        """Handle street creation and town linking"""
-        street_name = record.get("Název ulice", "").strip()
-        if not street_name:
-            return None
-
-        if street_name in streets:
-            street = streets[street_name]
-        else:
-            street = self.env["ruian.street"].create({"name": street_name})
-            streets[street_name] = street
-            file_stats["new_streets"] += 1
-            global_stats["streets"] += 1
-            _logger.debug("➕ Created street: %s", street_name)
-
-        if town and town.id not in street.town_ids.ids:
-            street.write({"town_ids": [(4, town.id)]})
-            _logger.debug("🔗 Linked street %s to town %s", street_name, town.name)
-
-        return street
-
-    def _process_number(self, record, numbers, town, street, file_stats, global_stats):
-        """Handle number creation and relationships"""
-        number_code_str = record.get("Kód ADM")
-        if not number_code_str:
-            return
-
-        try:
-            number_code = int(number_code_str)
-            if number_code in numbers:
-                number = numbers[number_code]
-            else:
-                number_data = {
-                    "code": number_code,
-                    "name": self._get_number_name(record),
-                    "coord_x": self._safe_float(record.get("Souřadnice X")),
-                    "coord_y": self._safe_float(record.get("Souřadnice Y")),
-                    "town_id": town.id if town else False,
-                    "street_id": street.id if street else False,
-                }
-
-                if not number_data["name"]:
-                    raise ValueError("Missing number name")
-
-                number = self.env["ruian.number"].create(number_data)
-                numbers[number_code] = number
-                file_stats["new_numbers"] += 1
-                global_stats["numbers"] += 1
-                _logger.debug(
-                    "➕ Created number: %s (%d)", number_data["name"], number_code
-                )
-
-            if street and number.id not in street.number_ids.ids:
-                street.write({"number_ids": [(4, number.id)]})
-                _logger.debug(
-                    "🔗 Linked number %s to street %s", number.name, street.name
-                )
-
-        except Exception as e:
-            _logger.warning("⚠️ Number error in row %d: %s", file_stats["rows"], str(e))
-            file_stats["warnings"] += 1
-
-    def _clear_existing_data(self):
-        """Clear existing RUIAN data"""
-        _logger.info("Clearing existing data...")
-        tables = [
-            "ruian_street_number_rel",
-            "ruian_street_town_rel",
-            "ruian_number",
-            "ruian_street",
-            "ruian_town",
-        ]
-        for table in tables:
-            self.env.cr.execute(
-                "SELECT EXISTS (SELECT 1 FROM pg_tables WHERE tablename = %s AND schemaname = 'public')",
-                (table,),
-            )
-            exists = self.env.cr.fetchone()[0]
-            if exists:
-                _logger.info(f"Truncating table {table}...")
-                self.env.cr.execute(f"TRUNCATE TABLE {table} CASCADE")
-            else:
-                _logger.warning(f"Table {table} does not exist, skipping truncate")
-        self.env.cr.commit()
-        _logger.info("Data cleared successfully")
-
     def _download_zip(self, target_date):
         """Secure file download without chunking"""
         url = f"https://vdp.cuzk.gov.cz/vymenny_format/csv/{target_date}_OB_ADR_csv.zip"
@@ -345,3 +245,105 @@ class RuianImport(models.Model):
         except zipfile.BadZipFile as e:
             _logger.error("🚨 Corrupted ZIP: %s", str(e))
             raise UserError(_("Invalid ZIP archive")) from e
+
+    def _process_town(self, record, towns, file_stats, global_stats):
+        """Handle town creation and validation"""
+        town_code_str = record.get("Kód části obce")
+        if not town_code_str:
+            return None
+
+        try:
+            town_code = int(town_code_str)
+            if town_code in towns:
+                return towns[town_code]
+
+            town_data = {
+                "code": town_code,
+                "name": self._get_town_name(record),
+                "postal_code": record.get("PSČ", "").strip(),
+            }
+
+            existing_town = self.env["ruian.town"].search(
+                [("code", "=", town_code)], limit=1
+            )
+            if existing_town:
+                existing_town.write(town_data)
+                town = existing_town
+            else:
+                town = self.env["ruian.town"].create(town_data)
+                file_stats["new_towns"] += 1
+                global_stats["towns"] += 1
+
+            towns[town_code] = town
+            _logger.debug("✅ Upserted town: %s (%d)", town_data["name"], town_code)
+            return town
+
+        except Exception as e:
+            _logger.warning("⚠️ Town error in row %d: %s", file_stats["rows"], str(e))
+            file_stats["warnings"] += 1
+            return None
+
+    def _process_street(self, record, streets, town, file_stats, global_stats):
+        """Handle street creation and town linking"""
+        street_name = record.get("Název ulice", "").strip()
+        if not street_name:
+            return None
+
+        existing_street = self.env["ruian.street"].search(
+            [("name", "=", street_name)], limit=1
+        )
+        if existing_street:
+            street = existing_street
+        else:
+            street = self.env["ruian.street"].create({"name": street_name})
+            file_stats["new_streets"] += 1
+            global_stats["streets"] += 1
+
+        streets[street_name] = street
+        if town and town.id not in street.town_ids.ids:
+            street.write({"town_ids": [(4, town.id)]})
+
+        _logger.debug("✅ Upserted street: %s", street_name)
+        return street
+
+    def _process_number(self, record, numbers, town, street, file_stats, global_stats):
+        """Handle number creation and relationships"""
+        number_code_str = record.get("Kód ADM")
+        if not number_code_str:
+            return
+
+        try:
+            number_code = int(number_code_str)
+
+            number_data = {
+                "code": number_code,
+                "name": self._get_number_name(record),
+                "coord_x": self._safe_float(record.get("Souřadnice X")),
+                "coord_y": self._safe_float(record.get("Souřadnice Y")),
+                "town_id": town.id if town else False,
+                "street_id": street.id if street else False,
+            }
+
+            existing_number = self.env["ruian.number"].search(
+                [("code", "=", number_code)], limit=1
+            )
+            if existing_number:
+                existing_number.write(number_data)
+                number = existing_number
+            else:
+                number = self.env["ruian.number"].create(number_data)
+                file_stats["new_numbers"] += 1
+                global_stats["numbers"] += 1
+
+            numbers[number_code] = number
+
+            if street and number.id not in street.number_ids.ids:
+                street.write({"number_ids": [(4, number.id)]})
+
+            _logger.debug(
+                "✅ Upserted number: %s (%d)", number_data["name"], number_code
+            )
+
+        except Exception as e:
+            _logger.warning("⚠️ Number error in row %d: %s", file_stats["rows"], str(e))
+            file_stats["warnings"] += 1
