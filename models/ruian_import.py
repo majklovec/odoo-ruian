@@ -17,12 +17,6 @@ class RuianImport(models.Model):
     _description = "RUIAN Data Import"
     _progress_step = 1000  # Log progress every X records
 
-    def _safe_float(self, value):
-        try:
-            return float(str(value).replace(",", ".").strip()) if value else 0.0
-        except (TypeError, ValueError):
-            return 0.0
-
     def _get_number_name(self, record):
         domovni = record.get("Číslo domovní", "").strip()
         orient_number = record.get("Číslo orientační", "").strip()
@@ -327,8 +321,8 @@ class RuianImport(models.Model):
             number_data = {
                 "code": number_code,
                 "name": self._get_number_name(record),
-                "coord_x": self._safe_float(record.get("Souřadnice X")),
-                "coord_y": self._safe_float(record.get("Souřadnice Y")),
+                "coord_x": float(record.get("Souřadnice X")),
+                "coord_y": float(record.get("Souřadnice Y")),
                 "town_id": town.id if town else False,
                 "street_id": street.id if street else False,
             }

@@ -9,7 +9,7 @@
         <field name="name">ruian.log.list</field>
         <field name="model">ruian.log</field>
         <field name="arch" type="xml">
-            <list>
+            <list decoration-success="state == 'done'" decoration-danger="state == 'failed'">
                 <field name="state"/>
                 <field name="start_date"/>
                 <field name="end_date"/>
