@@ -19,6 +19,11 @@
         "views/ruian_town_views.xml",
         "views/ruian_menu.xml",
     ],
+    "external_dependencies": {
+        "python": [
+            "pyproj",
+        ]
+    },
     "icon": "/ruian/static/description/icon.png",
     "installable": True,
     "application": True,

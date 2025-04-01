@@ -17,7 +17,6 @@ class RuianImportLog(models.Model):
     streets = fields.Integer(string="Streets", readonly=True)
     numbers = fields.Integer(string="Numbers", readonly=True)
     warnings = fields.Integer(string="Warnings", readonly=True)
-
     duration = fields.Float(
         string="Duration",
         help="duration in hours",
@@ -30,6 +29,10 @@ class RuianImportLog(models.Model):
         string="Status",
         readonly=True,
     )
+    progress = fields.Char(
+        string="Progress", compute="_compute_progress", readonly=True
+    )
+    eta = fields.Char(string="ETA", compute="_compute_eta", readonly=True)
 
     error_message = fields.Char(string="Error message", readonly=True, index=True)
 
@@ -43,3 +46,41 @@ class RuianImportLog(models.Model):
                 log.duration = delta.total_seconds() / 3600  # Convert seconds to hours
             else:
                 log.duration = 0.0
+
+    @api.depends("files", "file_count")
+    def _compute_progress(self):
+        for log in self:
+            if log.file_count > 0:
+                percentage = (log.files / log.file_count) * 100
+            else:
+                percentage = 0.0
+            percentage_str = f"{percentage:.0f}%"
+            log.progress = f"{log.files} / {log.file_count} ({percentage_str})"
+
+    # New ETA calculation
+    @api.depends("start_date", "state", "files", "file_count")
+    def _compute_eta(self):
+        for log in self:
+            if log.state == "running" and not log.end_date and log.start_date:
+                now = fields.Datetime.now()
+                start = fields.Datetime.to_datetime(log.start_date)
+                elapsed = now - start
+                elapsed_hours = elapsed.total_seconds() / 3600  # Elapsed time in hours
+
+                if log.file_count > 0 and log.files <= log.file_count:
+                    if log.files == 0:
+                        log.eta = _("Estimating...")
+                        continue
+                    progress = log.files / log.file_count
+                    total_estimated_time = elapsed_hours / progress
+                    remaining_time = total_estimated_time - elapsed_hours
+                    if remaining_time <= 0:
+                        log.eta = _("About to complete")
+                    else:
+                        hours = int(remaining_time)
+                        minutes = int((remaining_time - hours) * 60)
+                        log.eta = f"{hours}h {minutes}m"
+                else:
+                    log.eta = _("Estimating...")
+            else:
+                log.eta = ""  # Empty if not running or completed

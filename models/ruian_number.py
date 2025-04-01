@@ -10,8 +10,8 @@ class RuianNumber(models.Model):
     code = fields.Integer(required=True)
     name = fields.Char(required=True)
 
-    coord_x = fields.Float(digits=(10, 7))
-    coord_y = fields.Float(digits=(10, 7))
+    lat = fields.Float(digits=(10, 7))
+    lon = fields.Float(digits=(10, 7))
 
     town_id = fields.Many2one("ruian.town", string="Town")
     street_id = fields.Many2one("ruian.street", string="Street")
@@ -26,5 +26,5 @@ class RuianNumber(models.Model):
         for record in self:
             street = record.street_id.name if record.street_id else ""
             town = record.town_id.name if record.town_id else ""
-            psc = record.town_id.postal_code if record.town_id else ""
-            record.full_address = f"{street} {record.name}, {town} {psc}"
+            zip = record.town_id.postal_code if record.town_id else ""
+            record.full_address = f"{street} {record.name}, {town} {zip}"

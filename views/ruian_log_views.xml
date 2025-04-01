@@ -16,11 +16,13 @@
                 <field name="name"/>
                 <field name="duration"/>
                 <field name="rows"/>
-                <field name="files"/>
-                <field name="file_count"/>
-                <field name="towns"/>
-                <field name="streets"/>
-                <field name="numbers"/>
+                <field name="files" optional="hide"/>
+                <field name="file_count" optional="hide"/>
+                <field name="progress"/>
+                <field name="eta"/>
+                <field name="towns" optional="hide"/>
+                <field name="streets" optional="hide"/>
+                <field name="numbers" optional="hide"/>
                 <field name="warnings" optional="hide"/>
                 <field name="error_message" optional="hide" />
             </list>

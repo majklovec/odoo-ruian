@@ -3,6 +3,7 @@ import logging
 import requests
 import zipfile
 import csv
+from pyproj import Transformer
 from io import BytesIO, TextIOWrapper
 from datetime import datetime, timedelta
 
@@ -16,6 +17,17 @@ class RuianImport(models.Model):
     _name = "ruian.import"
     _description = "RUIAN Data Import"
     _progress_step = 1000  # Log progress every X records
+    _transformer = Transformer.from_crs("EPSG:5514", "EPSG:4326", always_xy=True)
+
+    @api.model
+    def _register_hook(self):
+        """Set 'running' logs to 'failed' on server restart."""
+        res = super(RuianImport, self)._register_hook()
+        logs = self.env["ruian.log"].search([("state", "=", "running")])
+        if logs:
+            logs.write({"state": "failed"})
+            self.env.cr.commit()  # Ensure changes are saved immediately
+        return res
 
     def _get_number_name(self, record):
         domovni = record.get("Číslo domovní", "").strip()
@@ -35,12 +47,25 @@ class RuianImport(models.Model):
         else:
             return town
 
+    def _convert_epsg5514_to_epsg4326(
+        self, x_str: str, y_str: str
+    ) -> tuple[float, float]:
+        try:
+            x, y = float(x_str), float(y_str)
+            lon, lat = self._transformer.transform(x, y)
+            return lat, lon
+        except (ValueError, TypeError):
+            return 0.0, 0.0
+
     def run_ruian_import(self):
         """Main import method with guaranteed log updates"""
         _logger.info("=== Starting RUIAN import ===")
         start_time = datetime.now()
         today = fields.Date.today()
-        target_date = (today.replace(day=1) - timedelta(days=1)).strftime("%Y%m%d")
+        target_date = (
+            (today.replace(day=1) - timedelta(days=1)).replace(day=1)
+            - timedelta(days=1)
+        ).strftime("%Y%m%d")
 
         # Initialize log record
         log = self.env["ruian.log"].create(
@@ -318,11 +343,14 @@ class RuianImport(models.Model):
             if number_code in numbers:
                 return numbers[number_code]
 
+            lat, lon = self._convert_epsg5514_to_epsg4326(
+                record.get("Souřadnice X"), record.get("Souřadnice Y")
+            )
             number_data = {
                 "code": number_code,
                 "name": self._get_number_name(record),
-                "coord_x": float(record.get("Souřadnice X")),
-                "coord_y": float(record.get("Souřadnice Y")),
+                "lat": lat,
+                "lon": lon,
                 "town_id": town.id if town else False,
                 "street_id": street.id if street else False,
             }
