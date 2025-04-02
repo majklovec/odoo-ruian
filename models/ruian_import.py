@@ -139,12 +139,7 @@ class RuianImport(models.Model):
             )
             self.env.cr.commit()
 
-            _logger.info(
-                "Import completed: "
-                "%d files, %d rows, "
-                "%d towns (%d created, %d updated), "
-                "%d streets (%d created, %d updated,"
-                "%d numbers (%d created, %d updated) in %.2f seconds",
+            stats = (
                 global_stats["files"],
                 global_stats["rows"],
                 global_stats["towns"],
@@ -159,13 +154,21 @@ class RuianImport(models.Model):
                 total_duration,
             )
 
+            message_template = (
+                "Import completed: "
+                "%d files, %d rows, "
+                "%d towns (%d created, %d updated), "
+                "%d streets (%d created, %d updated, "
+                "%d numbers (%d created, %d updated) in %.2f seconds"
+            )
+
+            _logger.info(message_template % stats)
+
         except Exception as e:
             self.env.cr.rollback()
-            self.env["ruian.log"].create(
+            log.write(
                 {
-                    "name": target_date,
                     "state": "failed",
-                    "start_date": fields.Datetime.now(),
                     "end_date": fields.Datetime.now(),
                     "error_message": str(e)[:500],
                 }
