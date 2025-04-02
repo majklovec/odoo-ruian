@@ -21,8 +21,14 @@
                 <field name="progress"/>
                 <field name="eta"/>
                 <field name="towns" optional="hide"/>
+                <field name="towns_created" optional="hide"/>
+                <field name="towns_updated" optional="hide"/>
                 <field name="streets" optional="hide"/>
+                <field name="streets_created" optional="hide"/>
+                <field name="streets_updated" optional="hide"/>
                 <field name="numbers" optional="hide"/>
+                <field name="numbers_created" optional="hide"/>
+                <field name="numbers_updated" optional="hide"/>
                 <field name="warnings" optional="hide"/>
                 <field name="error_message" optional="hide" />
             </list>
@@ -46,9 +52,15 @@
                         <field name="rows"/>
                         <field name="files"/>
                         <field name="file_count"/>
-                        <field name="towns"/>
-                        <field name="streets"/>
-                        <field name="numbers"/>
+                        <field name="towns" optional="hide"/>
+                        <field name="towns_created" optional="hide"/>
+                        <field name="towns_updated" optional="hide"/>
+                        <field name="streets" optional="hide"/>
+                        <field name="streets_created" optional="hide"/>
+                        <field name="streets_updated" optional="hide"/>
+                        <field name="numbers" optional="hide"/>
+                        <field name="numbers_created" optional="hide"/>
+                        <field name="numbers_updated" optional="hide"/>
                         <field name="warnings" optional="hide"/>
                         <field name="error_message" optional="hide" />
                     </group>
