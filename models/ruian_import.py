@@ -161,7 +161,6 @@ class RuianImport(models.Model):
                 "%d streets (%d created, %d updated, "
                 "%d numbers (%d created, %d updated) in %.2f seconds"
             )
-
             _logger.info(message_template % stats)
 
         except Exception as e:
@@ -262,7 +261,7 @@ class RuianImport(models.Model):
 
         global_stats["towns_created"] += created
         global_stats["towns_updated"] += len(town_codes) - created
-        global_stats["towns"] += created
+        global_stats["towns"] += len(town_codes)
 
         return town_cache
 
@@ -302,7 +301,7 @@ class RuianImport(models.Model):
 
         global_stats["streets_created"] += created
         global_stats["streets_updated"] += len(street_names) - created
-        global_stats["streets"] += created
+        global_stats["streets"] += len(street_names)
 
         return street_cache
 
@@ -357,7 +356,6 @@ class RuianImport(models.Model):
         if to_create:
             self.env["ruian.number"].create(to_create)
             created = len(to_create)
-            global_stats["numbers"] += created
 
         updated = 0
         for data in to_update:
@@ -365,6 +363,7 @@ class RuianImport(models.Model):
             num.write(data)
             updated += 1
 
+        global_stats["numbers"] += created + updated
         global_stats["numbers_created"] += created
         global_stats["numbers_updated"] += updated
         global_stats["rows"] += len(chunk)
