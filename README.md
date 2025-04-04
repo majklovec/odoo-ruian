@@ -1,2 +1,1 @@
 # odoo-ruian
-# odoo-ruian

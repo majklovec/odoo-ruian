@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<templates>
-    <t t-name="RUIANAutocomplete">
-        <div class="ruian-autocomplete">
-            <input type="text" class="ruian-input form-control" placeholder="Start typing address..." />
-            <div class="suggestion-list o_hidden"></div>
-            <div class="ruian-spinner o_hidden">
-                <i class="fa fa-refresh fa-spin"></i>
-            </div>
-        </div>
+<templates xml:space="preserve">
+    <t t-name="web.RuianAutocomplete">
+        <t t-if="props.readonly">
+            <span t-esc="formattedValue"/>
+        </t>
+        <t t-else="">
+            <input class="o_input" t-att-class="{
+                    'o_field_translate': isTranslatable,
+                    'o_field_placeholder': hasDynamicPlaceholder
+                }" t-att-id="props.id" t-att-type="props.isPassword ? 'password' : 'text'" t-att-autocomplete="props.autocomplete or (props.isPassword ? 'new-password' : 'off')" t-att-maxlength="maxLength > 0 and maxLength" t-att-placeholder="placeholder" t-on-blur="onBlur" t-ref="input" />
+        </t>
     </t>
 </templates>

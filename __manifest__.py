@@ -5,7 +5,7 @@
     "description": """
         Add RUIAN code
     """,
-    "category": "Users",
+    "category": "Extra Tools",
     "author": "Michal Vondráček",
     "website": "https://www.optimal4.cz",
     "depends": ["base", "web", "contacts"],
@@ -19,6 +19,13 @@
         "views/ruian_town_views.xml",
         "views/ruian_menu.xml",
     ],
+    "assets": {
+        "web.assets_backend": [
+            "ruian/static/src/css/*",
+            "ruian/static/src/js/*",
+            "ruian/static/src/xml/*",
+        ],
+    },
     "external_dependencies": {
         "python": [
             "pyproj",
